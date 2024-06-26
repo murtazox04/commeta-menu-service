@@ -4,8 +4,11 @@ from app.infrastructure.database.dao.rdb import (
     BaseDAO,
     RestaurantDAO,
     MenuCategoryDAO,
+    DiscountDAO,
     DishDAO,
-    DishParameterDAO
+    DishParameterDAO,
+    CartDAO,
+    CartItemDAO
 )
 
 
@@ -17,6 +20,6 @@ class HolderDao:
         self.menu_category = MenuCategoryDAO(self.session)
         self.dish = DishDAO(self.session)
         self.dish_parameter = DishParameterDAO(self.session)
-        # self.discount = DiscountDAO(self.session)
-        # self.order_item = OrderItemDAO(self.session)
-        # self.order = OrderDAO(self.session)
+        self.discount = DiscountDAO(self.session)
+        self.cart = CartDAO(self.session)
+        self.cart_item = CartItemDAO(self.session)

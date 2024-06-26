@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from app import dto
 from app.api import schems
@@ -13,22 +13,6 @@ router = APIRouter()
     '/menu-category',
     description='Get all menu categories'
 )
-async def get_menu_categories(dao: HolderDao = Depends(dao_provider)) -> List[dto.MenuCategory]:
-    return await dao.menu_category.get_menu_categories()
-
-
-@router.get(
-    '/menu-category/{category_id}',
-    description='Get a specific menu category'
-)
-async def get_menu_category(
-        category_id: int,
-        dao: HolderDao = Depends(dao_provider)
-) -> dto.MenuCategory:
-    return await dao.menu_category.get_menu_category_by_id(category_id)
-
-
-@router.get('/menu-category', response_model=List[dto.MenuCategory])
 async def get_menu_categories(dao: HolderDao = Depends(dao_provider)) -> List[dto.MenuCategory]:
     return await dao.menu_category.get_menu_categories()
 
@@ -99,9 +83,6 @@ async def create_dish(
         dao: HolderDao = Depends(dao_provider)
 ) -> dto.Dish:
     data = await dao.dish.add_dish(dish)
-    print("----------------")
-    print(data)
-    print("----------------")
     return data
 
 
@@ -181,3 +162,67 @@ async def delete_product_param(
         dao: HolderDao = Depends(dao_provider)
 ):
     return await dao.dish_parameter.delete_product_parameter(product_param_id)
+
+
+# Discount
+
+@router.get(
+    '/discounts',
+    description='Get all Discounts'
+)
+async def get_discounts(dao: HolderDao = Depends(dao_provider)) -> List[dto.Discount]:
+    return await dao.discount.get_discounts()
+
+
+@router.get(
+    '/discounts/{discount_id}',
+    description='Get a specific Discount'
+)
+async def get_discount(
+        discount_id: int,
+        dao: HolderDao = Depends(dao_provider)
+) -> dto.Discount:
+    discount = await dao.discount.get_discount_by_id(discount_id)
+    if not discount:
+        raise HTTPException(status_code=404, detail="Discount not found")
+    return discount
+
+
+@router.post(
+    '/discounts',
+    description='Create a new Discount'
+)
+async def create_discount(
+        discount: schems.DiscountCreateUpdate,
+        dao: HolderDao = Depends(dao_provider)
+) -> dto.Discount:
+    return await dao.discount.add_discount(discount)
+
+
+@router.put(
+    '/discounts/{discount_id}',
+    description='Update a Discount'
+)
+async def update_discount(
+        discount_id: int,
+        discount_update: schems.DiscountCreateUpdate,
+        dao: HolderDao = Depends(dao_provider)
+) -> dto.Discount:
+    updated_discount = await dao.discount.update_discount(discount_id, discount_update)
+    if not updated_discount:
+        raise HTTPException(status_code=404, detail="Discount not found")
+    return updated_discount
+
+
+@router.delete(
+    '/discounts/{discount_id}',
+    description='Delete a Discount',
+)
+async def delete_discount(
+        discount_id: int,
+        dao: HolderDao = Depends(dao_provider)
+):
+    success = await dao.discount.delete_discount(discount_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Discount not found")
+    return success

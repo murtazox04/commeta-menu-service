@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
+from datetime import datetime
 from typing import Optional, List
+from pydantic import BaseModel, Field
 
 
 class DiscountCreateUpdate(BaseModel):
@@ -8,12 +9,12 @@ class DiscountCreateUpdate(BaseModel):
         title="Dish ID",
         description="The ID of the associated dish"
     )
-    start_date: Optional[str] = Field(
+    start_date: Optional[datetime] = Field(
         alias="startDate",
         title="Start Date",
         description="Start date of the discount validity"
     )
-    end_date: Optional[str] = Field(
+    end_date: datetime = Field(
         alias="endDate",
         title="End Date",
         description="End date of the discount validity"
@@ -21,6 +22,12 @@ class DiscountCreateUpdate(BaseModel):
     price: float = Field(
         title="Price",
         description="Discounted price of the dish"
+    )
+    is_active: bool = Field(
+        alias='isActive',
+        title="Is Active",
+        description="Whether the discount is active",
+        default=True
     )
 
 
@@ -30,11 +37,11 @@ class Discount(DiscountCreateUpdate):
         description="The unique identifier for the discount",
         ge=1
     )
-    created_at: Optional[str] = Field(
+    created_at: Optional[datetime] = Field(
         title="Created At",
         description="Timestamp indicating when the discount was created"
     )
-    updated_at: Optional[str] = Field(
+    updated_at: Optional[datetime] = Field(
         title="Updated At",
         description="Timestamp indicating when the discount was last updated"
     )
@@ -60,11 +67,11 @@ class MenuCategory(MenuCategoryCreateUpdate):
         description="The unique identifier for the menu category",
         ge=1
     )
-    created_at: Optional[str] = Field(
+    created_at: Optional[datetime] = Field(
         title="Created At",
         description="Timestamp indicating when the menu category was created"
     )
-    updated_at: Optional[str] = Field(
+    updated_at: Optional[datetime] = Field(
         title="Updated At",
         description="Timestamp indicating when the menu category was last updated"
     )
@@ -94,11 +101,11 @@ class Dish(DishCreateUpdate):
         description="The unique identifier for the dish",
         ge=1
     )
-    created_at: Optional[str] = Field(
+    created_at: Optional[datetime] = Field(
         title="Created At",
         description="Timestamp indicating when the dish was created"
     )
-    updated_at: Optional[str] = Field(
+    updated_at: Optional[datetime] = Field(
         title="Updated At",
         description="Timestamp indicating when the dish was last updated"
     )
@@ -137,11 +144,11 @@ class DishParameter(DishParameterCreateUpdate):
         description="The unique identifier for the dish parameter",
         ge=1
     )
-    created_at: Optional[str] = Field(
+    created_at: Optional[datetime] = Field(
         title="Created At",
         description="Timestamp indicating when the dish parameter was created"
     )
-    updated_at: Optional[str] = Field(
+    updated_at: Optional[datetime] = Field(
         title="Updated At",
         description="Timestamp indicating when the dish parameter was last updated"
     )

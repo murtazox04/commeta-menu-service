@@ -5,8 +5,8 @@ from .product import Dish
 
 
 class CartItemCreateUpdate(BaseModel):
-    dishId: int = Field(
-        alias="dish_id",
+    dish_id: int = Field(
+        alias="dishId",
         title="Dish ID",
         description="The ID of the associated dish"
     )
@@ -31,7 +31,8 @@ class CartItem(CartItemCreateUpdate):
         title="Updated At",
         description="Timestamp indicating when the cart item was last updated"
     )
-    total_cost: Optional[float] = Field(
+    total_cost: float = Field(
+        alias="totalCost",
         title="Total Cost",
         description="Total cost of the cart item (computed property)"
     )
@@ -42,11 +43,12 @@ class CartItem(CartItemCreateUpdate):
 
 
 class CartCreateUpdate(BaseModel):
-    qr_code: str = Field(
-        title="QR Code",
-        description="QR code associated with the cart",
-        max_length=255
-    )
+    # items: List[int] = Field(
+    #     title="Items",
+    #     description="List of dish IDs associated with the cart",
+    #     default=[]
+    # )
+    items: List[int] = []
 
 
 class Cart(CartCreateUpdate):
@@ -68,6 +70,7 @@ class Cart(CartCreateUpdate):
         description="List of cart items associated with the cart"
     )
     total_cost: Optional[float] = Field(
+        alias="totalCost",
         title="Total Cost",
         description="Total cost of all items in the cart (computed property)"
     )

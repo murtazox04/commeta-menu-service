@@ -1,6 +1,6 @@
 from datetime import datetime
-from sqlalchemy import DateTime, func, BigInteger
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import DateTime, func, BigInteger
 from sqlalchemy.orm import declarative_base, mapped_column, Mapped
 
 Base = declarative_base()
@@ -13,9 +13,3 @@ class BaseModel(Base):
     id: Mapped[int] = mapped_column(BigInteger, autoincrement=True, primary_key=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(True), default=func.now(), onupdate=func.now())
-
-    async def save(self, session: AsyncSession):
-        if not self.id:
-            session.add(self)
-        await session.commit()
-        await session.refresh(self)

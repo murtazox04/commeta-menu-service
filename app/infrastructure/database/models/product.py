@@ -1,6 +1,6 @@
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Boolean
 
 from .base import BaseModel
 
@@ -20,16 +20,17 @@ class Dish(BaseModel):
     name = Column(String, index=True, nullable=False)
     price = Column(Float, nullable=False)
     category_id = Column(Integer, ForeignKey('menu_categories.id'), nullable=False)
+    discounted_price = Column(Float, nullable=True, default=0)
 
     category = relationship('MenuCategory', back_populates='dishes')
-    discounts = relationship('Discount', back_populates='dish')
+    discount = relationship('Discount', uselist=False, back_populates='dish', cascade="all, delete-orphan")
     cart_items = relationship('CartItem', back_populates='dish')
 
     @property
-    def get_price(self) -> float:
-        for discount in self.discounts:
-            if discount.start_date <= func.now() <= discount.end_date:
-                return self.price - discount.price
+    def effective_price(self):
+        if (self.discount and
+                self.discount.start_date <= func.now <= self.discount.end_date and self.discount.is_active):
+            return self.discount.price
         return self.price
 
 
@@ -44,9 +45,11 @@ class DishParameter(BaseModel):
 class Discount(BaseModel):
     __tablename__ = 'discounts'
 
-    dish_id = Column(Integer, ForeignKey('dishes.id'), primary_key=True)
+    id = Column(Integer, primary_key=True)
+    dish_id = Column(Integer, ForeignKey('dishes.id'), unique=True, nullable=False)
     start_date = Column(DateTime(timezone=True), default=func.now(), nullable=False)
     end_date = Column(DateTime(timezone=True), nullable=False)
     price = Column(Float, nullable=False)
+    is_active = Column(Boolean, default=True)
 
-    dish = relationship('Dish', back_populates='discounts')
+    dish = relationship('Dish', back_populates='discount')

@@ -10,6 +10,7 @@ class Discount(Base):
     start_date: datetime = Field(alias='startDate')
     end_date: datetime = Field(alias='endDate')
     price: float
+    is_active: bool = Field(alias='isActive', default=True)
 
 
 class Dish(Base):
