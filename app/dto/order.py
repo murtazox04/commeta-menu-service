@@ -1,19 +1,17 @@
-from typing import List, Optional
+from pydantic import Field
+from typing import List
 
 from .base import Base
-from .product import Dish, Discount
 
 
-class OrderItem(Base):
-    order_id: int
-    dish_id: int
+class CartItem(Base):
+    dishId: int = Field(alias='dish_id')
     quantity: int
-    price: float
-    discount: Optional[Discount]
-    dish: Dish
+    totalCost: float = Field(alias='total_cost')
 
 
-class Order(Base):
-    table_number: int
-    status: str
-    items: List[OrderItem]
+class Cart(Base):
+    items: List[CartItem]
+    qrCode: str = Field(alias='qr_code')
+    totalCost: float = Field(alias='total_cost')
+

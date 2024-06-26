@@ -4,5 +4,5 @@ from .product import (
     Dish,
     ProductParameter
 )
-from .order import Discount, Order, OrderItem
-from .restaurant import RestaurantBase, RestaurantCreate, Restaurant
+# from .order import Or
+from .restaurant import Restaurant

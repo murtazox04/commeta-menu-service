@@ -1,23 +1,15 @@
-from typing import List
+from pydantic import Field
 
-from app.dto import Base, MenuCategory
+from app.dto import Base
 
 
-class RestaurantBase(Base):
+class Restaurant(Base):
     name: str
     address: str
-    is_verified: bool
+    is_verified: bool = Field(alias='isVerified', default=False)
     address: str
     latitude: float
     longitude: float
-    working_time: str
+    working_time: str = Field(alias='workingTime', default=None)
     description: str
-
-
-class RestaurantCreate(RestaurantBase):
-    pass
-
-
-class Restaurant(RestaurantBase):
-    id: int
-    menu_categories: List['MenuCategory'] = []
+    phone_number: str = Field(alias='phoneNumber', default=None)

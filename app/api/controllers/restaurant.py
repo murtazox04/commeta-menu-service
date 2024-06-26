@@ -1,4 +1,5 @@
 from typing import List
+from fastapi.responses import Response
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app import dto
@@ -14,7 +15,8 @@ router = APIRouter()
     description='Get all restaurants',
 )
 async def get_restaurants(dao: HolderDao = Depends(dao_provider)) -> List[dto.Restaurant]:
-    return await dao.restaurant.get_restaurants()
+    data = await dao.restaurant.get_restaurants()
+    return data
 
 
 @router.get(
@@ -30,7 +32,7 @@ async def get_restaurant(restaurant_id: int, dao: HolderDao = Depends(dao_provid
     description='Create restaurant',
 )
 async def create_restaurant(
-        restaurant: schems.RestaurantBase,
+        restaurant: schems.RestaurantCreateUpdate,
         dao: HolderDao = Depends(dao_provider)
 ) -> dto.Restaurant:
     return await dao.restaurant.add_restaurant(restaurant)
@@ -42,18 +44,20 @@ async def create_restaurant(
 )
 async def update_restaurant(
         restaurant_id: int,
-        restaurant: schems.RestaurantBase,
+        restaurant: schems.RestaurantCreateUpdate,
         dao: HolderDao = Depends(dao_provider)
 ) -> dto.Restaurant:
     return await dao.restaurant.update_restaurant(restaurant_id, restaurant)
 
 
-@router.delete(
-    '/restaurants/{restaurant_id}',
-    description='Delete restaurant'
-)
+@router.delete('/restaurants/{restaurant_id}', description='Delete restaurant')
 async def delete_restaurant(
         restaurant_id: int,
         dao: HolderDao = Depends(dao_provider)
-) -> dto.Restaurant:
-    return await dao.restaurant.delete_restaurant(restaurant_id)
+):
+    deleted = await dao.restaurant.delete_restaurant(restaurant_id)
+    if deleted:
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    else:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+

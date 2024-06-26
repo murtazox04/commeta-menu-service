@@ -59,7 +59,7 @@ async def update_menu_category(
 async def delete_menu_category(
         category_id: int,
         dao: HolderDao = Depends(dao_provider)
-) -> dto.MenuCategory:
+):
     return await dao.menu_category.delete_menu_category(category_id)
 
 
@@ -76,7 +76,7 @@ async def get_dishes(
 
 
 @router.get(
-    '/dish/{dish_id}',
+    '/dishes/{dish_id}',
     description='Get a specific dish',
     response_model=schems.Dish
 )
@@ -84,11 +84,13 @@ async def get_dish(
         dish_id: int,
         dao: HolderDao = Depends(dao_provider)
 ) -> dto.Dish:
-    return await dao.dish.get_dish_by_id(dish_id)
+    data = await dao.dish.get_dish_by_id(dish_id)
+    print(data)
+    return data
 
 
 @router.post(
-    '/dish',
+    '/dishes',
     description='Create a new dish',
     response_model=schems.Dish
 )
@@ -100,7 +102,7 @@ async def create_dish(
 
 
 @router.put(
-    '/dish/{dish_id}',
+    '/dishes/{dish_id}',
     description='Update a dish',
     response_model=schems.Dish
 )
@@ -113,13 +115,13 @@ async def update_dish(
 
 
 @router.delete(
-    '/dish/{dish_id}',
+    '/dishes/{dish_id}',
     description='Delete a dish',
 )
 async def delete_dish(
         dish_id: int,
         dao: HolderDao = Depends(dao_provider)
-) -> dto.Dish:
+):
     return await dao.dish.delete_dish(dish_id)
 
 
@@ -135,15 +137,15 @@ async def get_product_params(dao: HolderDao = Depends(dao_provider)) -> List[dto
 
 
 @router.get(
-    '/product-params',
+    '/product-params/{product_param_id}',
     description='Get a specific Product Parameters',
     response_model=schems.ProductParameter
 )
 async def get_product_param(
-        product_parameters_id: int,
+        product_param_id: int,
         dao: HolderDao = Depends(dao_provider)
 ) -> dto.ProductParameter:
-    return await dao.product_parameter.get_product_parameter_by_id(product_parameters_id)
+    return await dao.product_parameter.get_product_parameter_by_id(product_param_id)
 
 
 @router.post(
@@ -178,5 +180,5 @@ async def update_product_params(
 async def delete_product_param(
         product_param_id: int,
         dao: HolderDao = Depends(dao_provider)
-) -> dto.ProductParameter:
-    return await dao.product_parameter.delete_dish_parameter(product_param_id)
+):
+    return await dao.product_parameter.delete_product_parameter(product_param_id)

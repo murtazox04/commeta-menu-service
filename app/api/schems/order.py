@@ -1,92 +1,73 @@
-from datetime import datetime
-from typing import List, Optional
 from pydantic import BaseModel, Field
+from typing import Optional, List
+
+from .product import Dish
 
 
-class DiscountBase(BaseModel):
-    dish_id: int = Field(
+class CartItemCreateUpdate(BaseModel):
+    dishId: int = Field(
+        alias="dish_id",
         title="Dish ID",
-        description="The ID of the dish to which the discount applies"
+        description="The ID of the associated dish"
     )
-    start_time: datetime = Field(
-        title="Start Time",
-        description="The start time of the discount period"
-    )
-    end_time: datetime = Field(
-        title="End Time",
-        description="The end time of the discount period"
-    )
-    discounted_price: float = Field(
-        title="Discounted Price",
-        description="The discounted price of the dish"
-    )
-
-
-class Discount(DiscountBase):
-    id: int
-
-    class Config:
-        orm_mode = True
-
-
-class OrderItemBase(BaseModel):
-    order_id: int
-    dish_id: int
     quantity: int = Field(
         title="Quantity",
-        description="The quantity of the dish ordered",
-        ge=1,
-        default=1
-    )
-    price: float = Field(
-        title="Price",
-        description="The price of the dish at the time of ordering",
-        ge=0,
-        default=0.0
-    )
-    discount_id: Optional[int] = Field(
-        title="Discount ID",
-        description="The ID of the applied discount if any"
+        description="Quantity of the dish in the cart",
+        ge=1
     )
 
 
-class OrderItem(OrderItemBase):
-    id: int
-
-    class Config:
-        orm_mode = True
-
-
-class OrderBase(BaseModel):
-    table_number: int = Field(
-        title="Table Number",
-        description="The number of the table making the order"
+class CartItem(CartItemCreateUpdate):
+    id: int = Field(
+        title="ID",
+        description="The unique identifier for the cart item",
+        ge=1
     )
-    status: str = Field(
-        title="Status",
-        description="The status of the order",
-        min_length=1,
-        max_length=50
-    )
-
-
-class OrderCreate(OrderBase):
-    items: List[OrderItemBase] = Field(
-        title="Order Items",
-        description="List of items in the order"
-    )
-
-
-class Order(OrderBase):
-    id: int
-    created_at: datetime = Field(
+    created_at: Optional[str] = Field(
         title="Created At",
-        description="The time when the order was created"
+        description="Timestamp indicating when the cart item was created"
     )
-    items: List[OrderItem] = Field(
-        title="Order Items",
-        description="List of items in the order"
+    updated_at: Optional[str] = Field(
+        title="Updated At",
+        description="Timestamp indicating when the cart item was last updated"
+    )
+    total_cost: Optional[float] = Field(
+        title="Total Cost",
+        description="Total cost of the cart item (computed property)"
+    )
+    dish: Dish = Field(
+        title="Dish",
+        description="Dish associated with the cart item"
     )
 
-    class Config:
-        orm_mode = True
+
+class CartCreateUpdate(BaseModel):
+    qr_code: str = Field(
+        title="QR Code",
+        description="QR code associated with the cart",
+        max_length=255
+    )
+
+
+class Cart(CartCreateUpdate):
+    id: int = Field(
+        title="ID",
+        description="The unique identifier for the cart",
+        ge=1
+    )
+    created_at: Optional[str] = Field(
+        title="Created At",
+        description="Timestamp indicating when the cart was created"
+    )
+    updated_at: Optional[str] = Field(
+        title="Updated At",
+        description="Timestamp indicating when the cart was last updated"
+    )
+    items: Optional[List[CartItem]] = Field(
+        title="Items",
+        description="List of cart items associated with the cart"
+    )
+    total_cost: Optional[float] = Field(
+        title="Total Cost",
+        description="Total cost of all items in the cart (computed property)"
+    )

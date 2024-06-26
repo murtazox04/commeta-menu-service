@@ -13,6 +13,7 @@ sqlalchemy = "^2.0.31"
 alembic = "^1.13.1"
 pydantic-settings = "^2.3.4"
 asyncpg = "^0.29.0"
+qrcode = {extras = ["pil"], version = "^7.4.2"}
 
 
 [build-system]
