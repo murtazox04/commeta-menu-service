@@ -15,7 +15,6 @@ class RestaurantDAO(BaseDAO[Restaurant]):
 
     async def add_restaurant(self, restaurant: schems.RestaurantCreateUpdate) -> dto.Restaurant:
         async with self.session.begin():
-            print(restaurant)
             db_restaurant = Restaurant(**restaurant.dict())
             self.session.add(db_restaurant)
         await self.session.refresh(db_restaurant)

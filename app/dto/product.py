@@ -6,25 +6,24 @@ from app.dto import Base
 
 
 class Discount(Base):
-    dishId: int = Field(alias='dish_id')
-    startDate: datetime = Field(alias='start_date')
-    endDate: datetime = Field(alias='end_date')
+    dish_id: int = Field(alias='dishId')
+    start_date: datetime = Field(alias='startDate')
+    end_date: datetime = Field(alias='endDate')
     price: float
-
-
-class MenuCategory(Base):
-    name: str
-    restaurantId: int = Field(alias='restaurant_id')
-    dishes: List['Dish'] = []
 
 
 class Dish(Base):
     name: str
     price: float
-    categoryId: int = Field(alias='category_id')
+    category_id: int = Field(alias='categoryId')
 
 
-class ProductParameter(Base):
-    dishId: int = Field(alias='dish_id')
+class MenuCategory(Base):
+    name: str
+    restaurant_id: int = Field(alias='restaurantId')
+
+
+class DishParameter(Base):
+    dish_id: int = Field(alias='dishId')
     key: str
     value: str
