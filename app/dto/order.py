@@ -11,6 +11,6 @@ class CartItem(Base):
 
 
 class Cart(Base):
-    # items: List[CartItem]
+    items: List[CartItem] = Field(default=[], title='Cart items')
     total_cost: float = Field(alias='totalCost', default=None)
     qr_code: Optional[str] = Field(alias='qrCode', default=None)

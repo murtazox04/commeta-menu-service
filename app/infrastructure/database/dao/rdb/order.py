@@ -1,6 +1,7 @@
 from typing import Optional, List
 
-from pydantic import parse_obj_as
+from pydantic import parse_obj_as, ValidationError
+from sqlalchemy import func
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,32 +18,46 @@ class CartDAO(BaseDAO[Cart]):
         super().__init__(Cart, session)
 
     async def add_cart(self, cart: schems.CartCreateUpdate) -> dto.Cart:
-        # Fetch all cart items in a single query
         cart_items = await self.session.execute(
-            select(CartItem).where(CartItem.id.in_(cart.items))
+            select(CartItem).where(CartItem.id.in_(cart.items)).options(selectinload(CartItem.dish))
         )
         cart_items = cart_items.scalars().all()
 
         if not cart_items:
             raise ValueError("No valid items found for the cart")
 
-        # Create new Cart instance
         db_cart = Cart()
-
-        # Add items to the cart
         db_cart.items = cart_items
 
-        # Add cart to session and flush to get the ID
         self.session.add(db_cart)
         await self.session.flush()
 
-        # Update total cost
-        db_cart.total_cost = db_cart.calculate_total_cost()  # Call the method
+        # Now db_cart.id should be available
+        data = f"http://127.0.0.1:8001/carts/{db_cart.id}"
+        file_path = f"media/qrcode/{db_cart.id}.png"
+        db_cart.qr_code = generate_qr_code(data, file_path)
+
+        db_cart.total_cost = db_cart.calculate_total_cost()
 
         await self.session.commit()
-        await self.session.refresh(db_cart)
+        await self.session.refresh(db_cart, attribute_names=[
+            'items', 'total_cost', 'qr_code', 'created_at', 'updated_at'
+        ])
 
-        return db_cart
+        # Convert to dictionary before converting to Pydantic model
+        cart_dict = db_cart.__dict__.copy()
+        cart_dict['items'] = [item.__dict__.copy() for item in db_cart.items]
+
+        # Ensure all required fields are included
+        cart_dict['created_at'] = db_cart.created_at.isoformat()
+        cart_dict['updated_at'] = db_cart.updated_at.isoformat()
+
+        try:
+            validated_cart = dto.Cart.model_validate(cart_dict, from_attributes=True)
+            return validated_cart
+        except ValidationError as exc:
+            print(repr(exc.errors()[0]['type']))
+            raise exc
 
     async def get_cart(self, cart_id: int) -> Optional[dto.Cart]:
         query = select(Cart).options(
@@ -94,21 +109,39 @@ class CartDAO(BaseDAO[Cart]):
         return True
 
     async def add_item_to_cart(self, cart_id: int, item: schems.CartItemCreateUpdate) -> Optional[dto.Cart]:
-        db_cart = await self.session.get(Cart, cart_id)
-        if not db_cart:
-            return None
+        async with self.session as session:
+            db_cart = await session.get(Cart, cart_id)
+            if not db_cart:
+                return None
 
-        new_item = CartItem(dish_id=item.dish_id, quantity=item.quantity)
-        self.session.add(new_item)
-        await self.session.flush()
+            dish_id = item.dish_id
+            dish = await self.session.get(Dish, dish_id)
+            if not dish:
+                raise ValueError("Dish not found")
 
-        db_cart.items.append(new_item)
-        db_cart.total_cost = db_cart.calculate_total_cost
+            # Create a new CartItem instance
+            new_item = CartItem(dish_id=item.dish_id, quantity=item.quantity)
+            if dish.discounted_price and dish.discounted_price > 0:
+                new_item.total_cost = dish.discounted_price * new_item.quantity
+            else:
+                new_item.total_cost = dish.price * new_item.quantity
 
-        await self.session.commit()
-        await self.session.refresh(db_cart)
+            # Add the new item to the session
+            session.add(new_item)
 
-        return db_cart
+            # Associate the new item with the cart
+            db_cart.items.append(new_item)
+
+            # Recalculate total cost after adding the new item
+            db_cart.total_cost += float(new_item.total_cost)
+
+            # Commit the transaction to persist changes
+            await session.commit()
+
+            # Refresh the cart object to reflect any changes made in the database
+            await session.refresh(db_cart)
+
+            return db_cart
 
     async def remove_item_from_cart(self, cart_id: int, item_id: int) -> Optional[dto.Cart]:
         db_cart = await self.session.get(Cart, cart_id)
@@ -116,7 +149,7 @@ class CartDAO(BaseDAO[Cart]):
             return None
 
         db_cart.items = [item for item in db_cart.items if item.id != item_id]
-        db_cart.total_cost = db_cart.calculate_total_cost
+        db_cart.total_cost = db_cart.calculate_total_cost()
 
         await self.session.commit()
         await self.session.refresh(db_cart)

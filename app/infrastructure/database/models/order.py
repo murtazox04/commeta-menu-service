@@ -1,5 +1,5 @@
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, String, ForeignKey, Table, Float, event, select
+from sqlalchemy import Column, Integer, String, ForeignKey, Table, Float
 
 from .base import BaseModel
 
@@ -28,29 +28,7 @@ class Cart(BaseModel):
 
     qr_code = Column(String, nullable=True, default="media/logo.png")
     total_cost = Column(Float, nullable=True, default=0.0)
-    items = relationship('CartItem', secondary=cart_items_association, back_populates='carts')
+    items = relationship('CartItem', secondary=cart_items_association, lazy='selectin', back_populates='carts')
 
-    def calculate_total_cost(self):
+    def calculate_total_cost(self) -> float:
         return sum(item.total_cost for item in self.items)
-
-
-# @event.listens_for(CartItem, 'after_insert')
-# @event.listens_for(CartItem, 'after_update')
-# @event.listens_for(CartItem, 'after_delete')
-# def update_cart_total_cost(mapper, connection, target):
-#     cart_item_id = target.id
-#     cart_associations = connection.execute(
-#         cart_items_association.select().where(cart_items_association.c.cart_item_id == cart_item_id)
-#     ).fetchall()
-#
-#     for cart_association in cart_associations:
-#         cart_id = cart_association.cart_id
-#         if cart_id:
-#             cart = connection.execute(select(Cart).where(Cart.id == cart_id)).scalar_one_or_none()
-#             if cart:
-#                 cart.calculate_total_cost()
-#                 connection.execute(
-#                     Cart.__table__.update()
-#                     .where(Cart.id == cart_id)
-#                     .values(total_cost=cart.total_cost)
-#                 )

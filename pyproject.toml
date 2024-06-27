@@ -14,6 +14,8 @@ alembic = "^1.13.1"
 pydantic-settings = "^2.3.4"
 asyncpg = "^0.29.0"
 qrcode = {extras = ["pil"], version = "^7.4.2"}
+pillow = "^10.3.0"
+qrcode-artistic = "^3.0.2"
 
 
 [build-system]

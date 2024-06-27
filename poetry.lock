@@ -983,6 +983,24 @@ pil = ["pillow (>=9.1.0)"]
 test = ["coverage", "pytest"]
 
 [[package]]
+name = "qrcode-artistic"
+version = "3.0.2"
+description = "Artistic (Micro) QR Code plugin for Segno"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "qrcode-artistic-3.0.2.tar.gz", hash = "sha256:eb71f12673c89f638cf7252554a74ecbe4a22f1ce15920caa53da75a48c181f4"},
+    {file = "qrcode_artistic-3.0.2-py3-none-any.whl", hash = "sha256:a2aa751a7f0220767f70842cceec206b21f9207478b9612d468273a1f46429ae"},
+]
+
+[package.dependencies]
+Pillow = "*"
+segno = ">=1.0.2"
+
+[package.extras]
+svg = ["cairosvg"]
+
+[[package]]
 name = "rich"
 version = "13.7.1"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
@@ -999,6 +1017,17 @@ pygments = ">=2.13.0,<3.0.0"
 
 [package.extras]
 jupyter = ["ipywidgets (>=7.5.1,<9)"]
+
+[[package]]
+name = "segno"
+version = "1.6.1"
+description = "QR Code and Micro QR Code generator for Python"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "segno-1.6.1-py3-none-any.whl", hash = "sha256:e90c6ff82c633f757a96d4b1fb06cc932589b5237f33be653f52252544ac64df"},
+    {file = "segno-1.6.1.tar.gz", hash = "sha256:f23da78b059251c36e210d0cf5bfb1a9ec1604ae6e9f3d42f9a7c16d306d847e"},
+]
 
 [[package]]
 name = "shellingham"
@@ -1482,4 +1511,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "1995d9e15f207337045c43bad630d9204878f549a8a33d02c9ee4cd16474a504"
+content-hash = "0cf9a9ecb50facdefdef2ffd16a6163044dcfa20b486406fc9cc9c95bf08e951"

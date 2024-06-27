@@ -19,3 +19,4 @@ def generate_qr_code(data: str, file_path: str):
     img_qr_big.paste(logo, pos)
 
     img_qr_big.save(file_path)
+    return "http://127.0.0.1:8001/" + file_path

@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from .order import router as order_router
 from .product import router as product_router
@@ -18,3 +19,4 @@ def setup(app: FastAPI) -> None:
         router=product_router,
         tags=["products"]
     )
+    app.mount("/media", StaticFiles(directory="media"), name="media")
