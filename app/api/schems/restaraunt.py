@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
 from typing import Optional
+from pydantic import BaseModel, Field
 
 
 class RestaurantCreateUpdate(BaseModel):
@@ -44,20 +44,4 @@ class RestaurantCreateUpdate(BaseModel):
         title="Phone Number",
         description="Contact phone number of the restaurant",
         max_length=20
-    )
-
-
-class Restaurant(RestaurantCreateUpdate):
-    id: int = Field(
-        title="ID",
-        description="The unique identifier for the restaurant",
-        ge=1
-    )
-    created_at: Optional[str] = Field(
-        title="Created At",
-        description="Timestamp indicating when the restaurant was created"
-    )
-    updated_at: Optional[str] = Field(
-        title="Updated At",
-        description="Timestamp indicating when the restaurant was last updated"
     )
