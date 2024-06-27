@@ -5,6 +5,8 @@ services:
     command: poetry run python -m app.api
     restart: always
     container_name: "api"
+    depends_on:
+      - postgres
     networks:
       - postgres
     ports:
