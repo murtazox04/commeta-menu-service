@@ -1,3 +1,4 @@
+from uuid import UUID
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -18,7 +19,7 @@ async def get_cart(dao: HolderDao = Depends(dao_provider)) -> List[dto.Cart]:
 
 
 @router.get("/carts/{cart_id}", response_model=dto.Cart)
-async def get_cart(cart_id: int, dao: HolderDao = Depends(dao_provider)):
+async def get_cart(cart_id: UUID, dao: HolderDao = Depends(dao_provider)):
     carts = await dao.cart.get_carts()
     if not carts:
         raise HTTPException(status_code=404, detail="Cart not found")
@@ -35,7 +36,7 @@ async def get_cart(
 
 @router.put("/carts/{cart_id}", response_model=dto.Cart)
 async def update_cart(
-        cart_id: int,
+        cart_id: UUID,
         cart: schems.CartCreateUpdate,
         dao: HolderDao = Depends(dao_provider)
 ) -> dto.Cart:
@@ -47,7 +48,7 @@ async def update_cart(
 
 @router.delete("/carts/{cart_id}")
 async def delete_cart(
-        cart_id: int,
+        cart_id: UUID,
         dao: HolderDao = Depends(dao_provider)
 ):
     cart = await dao.cart.delete_cart(cart_id)
@@ -58,7 +59,7 @@ async def delete_cart(
 
 @router.post("/carts/{cart_id}/items", response_model=dto.Cart)
 async def add_item_to_cart(
-        cart_id: int,
+        cart_id: UUID,
         item: schems.CartItemCreateUpdate,
         dao: HolderDao = Depends(dao_provider),
 ):
@@ -70,7 +71,7 @@ async def add_item_to_cart(
 
 @router.delete("/carts/{cart_id}/items/{item_id}", response_model=dto.Cart)
 async def remove_item_from_cart(
-        cart_id: int,
+        cart_id: UUID,
         item_id: int,
         dao: HolderDao = Depends(dao_provider),
 ):
@@ -86,12 +87,12 @@ async def get_cart_items(dao: HolderDao = Depends(dao_provider)) -> List[dto.Car
     return await dao.cart_item.get_cart_items()
 
 
-@router.get('/cart-items/{cart_id}', description="Get cart item by id")
+@router.get('/cart-items/{item_id}', description="Get cart item by id")
 async def get_cart_item_by_id(
-        cart_id: int,
+        item_id: int,
         dao: HolderDao = Depends(dao_provider)
 ) -> dto.CartItem:
-    cart_item = await dao.cart_item.get_cart_item_by_id(cart_id)
+    cart_item = await dao.cart_item.get_cart_item_by_id(item_id)
     if not cart_item:
         raise HTTPException(status_code=404, detail="Cart item not found")
     return cart_item
@@ -105,24 +106,24 @@ async def create_cart_item(
     return await dao.cart_item.add_cart_item(cart_item)
 
 
-@router.put('/cart-items/{cart_id}', description="Update cart item")
+@router.put('/cart-items/{item_id}', description="Update cart item")
 async def update_cart_item(
-        cart_id: int,
+        item_id: int,
         cart_update: schems.CartItemCreateUpdate,
         dao: HolderDao = Depends(dao_provider)
 ) -> dto.CartItem:
-    updated_cart_item = await dao.cart_item.update_cart_item(cart_id, cart_update)
+    updated_cart_item = await dao.cart_item.update_cart_item(item_id, cart_update)
     if not updated_cart_item:
         raise HTTPException(status_code=404, detail="Cart item not found")
     return updated_cart_item
 
 
-@router.delete('/cart-items/{cart_id}', description="Delete cart item")
+@router.delete('/cart-items/{item_id}', description="Delete cart item")
 async def delete_cart_item(
-        cart_id: int,
+        item_id: int,
         dao: HolderDao = Depends(dao_provider)
 ):
-    success = await dao.cart_item.delete_cart_item(cart_id)
+    success = await dao.cart_item.delete_cart_item(item_id)
     if not success:
         raise HTTPException(status_code=404, detail="Cart item not found")
     return success

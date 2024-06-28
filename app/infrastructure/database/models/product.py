@@ -1,6 +1,18 @@
-from sqlalchemy.sql import func
+import pytz
+from datetime import datetime
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Boolean
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Float,
+    ForeignKey,
+    DateTime,
+    Boolean,
+    func,
+    event,
+    update
+)
 
 from .base import BaseModel
 
@@ -20,18 +32,12 @@ class Dish(BaseModel):
     name = Column(String, index=True, nullable=False)
     price = Column(Float, nullable=False)
     category_id = Column(Integer, ForeignKey('menu_categories.id'), nullable=False)
-    discounted_price = Column(Float, nullable=True, default=0)
+    discounted_price = Column(Float, nullable=True, default=None)
 
     category = relationship('MenuCategory', back_populates='dishes')
     discount = relationship('Discount', uselist=False, back_populates='dish', cascade="all, delete-orphan")
     cart_items = relationship('CartItem', back_populates='dish')
-
-    @property
-    def effective_price(self):
-        if (self.discount and
-                self.discount.start_date <= func.now <= self.discount.end_date and self.discount.is_active):
-            return self.discount.price
-        return self.price
+    params = relationship('DishParameter', back_populates='dish')
 
 
 class DishParameter(BaseModel):
@@ -40,6 +46,8 @@ class DishParameter(BaseModel):
     dish_id = Column(Integer, ForeignKey('dishes.id'), nullable=False)
     key = Column(String, nullable=False)
     value = Column(String, nullable=False)
+
+    dish = relationship('Dish', back_populates='params')
 
 
 class Discount(BaseModel):
@@ -53,3 +61,48 @@ class Discount(BaseModel):
     is_active = Column(Boolean, default=True)
 
     dish = relationship('Dish', back_populates='discount')
+
+
+# Event for automatically calculating discounted_price
+def update_discounted_price(mapper, connection, target):
+    try:
+        tashkent_tz = pytz.timezone('Asia/Tashkent')
+        now = datetime.now(tashkent_tz)
+        start_date = target.start_date.astimezone(
+            tashkent_tz) if target.start_date.tzinfo else target.start_date.replace(tzinfo=tashkent_tz)
+        end_date = target.end_date.astimezone(tashkent_tz) if target.end_date.tzinfo else target.end_date.replace(
+            tzinfo=tashkent_tz)
+
+        if target.is_active and start_date <= now <= end_date:
+            stmt = (
+                update(Dish)
+                .where(Dish.id == target.dish_id)
+                .values(discounted_price=(Dish.price - target.price))
+            )
+            connection.execute(stmt)
+        else:
+            stmt = (
+                update(Dish)
+                .where(Dish.id == target.dish_id)
+                .values(discounted_price=None)
+            )
+            connection.execute(stmt)
+    except Exception as e:
+        print(f"Error in update_discounted_price: {e}")
+
+
+def remove_discounted_price(mapper, connection, target):
+    try:
+        stmt = (
+            update(Dish)
+            .where(Dish.id == target.dish_id)
+            .values(discounted_price=None)
+        )
+        connection.execute(stmt)
+    except Exception as e:
+        print(f"Error in remove_discounted_price: {e}")
+
+
+event.listen(Discount, 'after_insert', update_discounted_price)
+event.listen(Discount, 'after_update', update_discounted_price)
+event.listen(Discount, 'after_delete', remove_discounted_price)

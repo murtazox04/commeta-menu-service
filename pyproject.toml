@@ -16,6 +16,7 @@ asyncpg = "^0.29.0"
 qrcode = {extras = ["pil"], version = "^7.4.2"}
 pillow = "^10.3.0"
 qrcode-artistic = "^3.0.2"
+pytz = "^2024.1"
 
 
 [build-system]

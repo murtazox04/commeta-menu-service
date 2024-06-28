@@ -1,5 +1,4 @@
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import DateTime, func, BigInteger
 from sqlalchemy.orm import declarative_base, mapped_column, Mapped
 

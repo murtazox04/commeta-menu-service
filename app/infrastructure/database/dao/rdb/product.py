@@ -1,6 +1,7 @@
 from typing import List, Optional
 from pydantic import parse_obj_as
 from sqlalchemy import select, delete
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import dto
@@ -64,24 +65,33 @@ class DishDAO(BaseDAO[Dish]):
 
     async def add_dish(
             self,
-            dish: schems.DishParameterCreateUpdate
+            dish: schems.DishCreateUpdate
     ) -> dto.Dish:
         db_dish = Dish(**dish.dict())
         self.session.add(db_dish)
         await self.session.commit()
         await self.session.refresh(db_dish)
-        return db_dish
+        return dto.Dish.model_validate(db_dish, from_attributes=True)
 
     async def get_dishes(self) -> List[dto.Dish]:
-        result = await self.session.execute(select(Dish))
+        result = await self.session.execute(
+            select(Dish).options(
+                selectinload(Dish.discount), selectinload(Dish.params)
+            )
+        )
         dishes = result.scalars().all()
         return parse_obj_as(List[dto.Dish], dishes)
 
     async def get_dish_by_id(self, dish_id: int) -> Optional[dto.Dish]:
-        result = await self.session.execute(select(Dish).where(Dish.id == dish_id))
+        result = await self.session.execute(
+            select(Dish).where(
+                Dish.id == dish_id).options(
+                selectinload(Dish.discount), selectinload(Dish.params)
+            )
+        )
         dish = result.scalar_one_or_none()
         if dish:
-            return dish
+            return dto.Dish.model_validate(dish, from_attributes=True)
         return None
 
     async def update_dish(
@@ -89,14 +99,15 @@ class DishDAO(BaseDAO[Dish]):
             dish_id: int,
             dish_update: schems.DishParameterCreateUpdate
     ) -> Optional[dto.Dish]:
-        result = await self.session.execute(select(Dish).where(Dish.id == dish_id))
+        result = await self.session.execute(select(Dish).where(
+            Dish.id == dish_id).options(selectinload(Dish.discount)))
         db_dish = result.scalar_one_or_none()
         if db_dish:
             for key, value in dish_update.dict().items():
                 setattr(db_dish, key, value)
             await self.session.commit()
             await self.session.refresh(db_dish)
-            return db_dish
+            return dto.Dish.model_validate(db_dish, from_attributes=True)
         return None
 
     async def delete_dish(self, dish_id: int) -> bool:
@@ -164,32 +175,35 @@ class DiscountDAO(BaseDAO[Discount]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(Discount, session)
 
-    async def add_discount(self, discount_data: schems.DiscountCreateUpdate) -> dto.Discount:
+    async def add_discount(
+            self,
+            discount_data: schems.DiscountCreateUpdate
+    ) -> dto.Discount:
         db_discount = Discount(**discount_data.dict())
         self.session.add(db_discount)
-
-        # Update the discounted price of the dish
-        result = await self.session.execute(select(Dish).where(Dish.id == db_discount.dish_id))
-        db_dish = result.scalar_one_or_none()
-        if db_dish:
-            db_dish.discounted_price = db_dish.price - db_discount.price
-            self.session.add(db_dish)
-
         await self.session.commit()
         await self.session.refresh(db_discount)
         return db_discount
 
     async def get_discounts(self) -> List[dto.Discount]:
-        result = await self.session.execute(select(Discount))
+        result = await self.session.execute(select(Discount).options(selectinload(Discount.dish)))
         discounts = result.scalars().all()
         return parse_obj_as(List[dto.Discount], discounts)
 
-    async def get_discount_by_id(self, discount_id: int) -> Optional[dto.Discount]:
-        result = await self.session.execute(select(Discount).where(Discount.id == discount_id))
+    async def get_discount_by_id(
+            self,
+            discount_id: int
+    ) -> Optional[dto.Discount]:
+        result = await self.session.execute(
+            select(Discount).where(Discount.id == discount_id).options(selectinload(Discount.dish)))
         discount = result.scalar_one_or_none()
         return discount
 
-    async def update_discount(self, discount_id: int, discount_data: schems.DiscountCreateUpdate) -> Optional[dto.Discount]:
+    async def update_discount(
+            self,
+            discount_id: int,
+            discount_data: schems.DiscountCreateUpdate
+    ) -> Optional[dto.Discount]:
         result = await self.session.execute(select(Discount).where(Discount.id == discount_id))
         db_discount = result.scalar_one_or_none()
         if db_discount:
@@ -197,31 +211,15 @@ class DiscountDAO(BaseDAO[Discount]):
                 setattr(db_discount, key, value)
             await self.session.commit()
             await self.session.refresh(db_discount)
-
-            # Update the discounted price of the dish
-            result = await self.session.execute(select(Dish).where(Dish.id == db_discount.dish_id))
-            db_dish = result.scalar_one_or_none()
-            if db_dish:
-                if db_discount.is_active:
-                    db_dish.discounted_price = db_dish.price - db_discount.price
-                else:
-                    db_dish.discounted_price = 0
-                self.session.add(db_dish)
-                await self.session.commit()
-                await self.session.refresh(db_dish)
         return db_discount
 
-    async def delete_discount(self, discount_id: int) -> bool:
+    async def delete_discount(
+            self,
+            discount_id: int
+    ) -> bool:
         result = await self.session.execute(select(Discount).where(Discount.id == discount_id))
         db_discount = result.scalar_one_or_none()
         if db_discount:
-            # Reset discounted price of the dish
-            result = await self.session.execute(select(Dish).where(Dish.id == db_discount.dish_id))
-            db_dish = result.scalar_one_or_none()
-            if db_dish:
-                db_dish.discounted_price = 0
-                self.session.add(db_dish)
-
             await self.session.execute(delete(Discount).where(Discount.id == discount_id))
             await self.session.commit()
             return True

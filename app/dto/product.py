@@ -1,5 +1,6 @@
 from pydantic import Field
 from datetime import datetime
+from typing import List, Optional
 
 from app.dto import Base
 
@@ -32,34 +33,6 @@ class Discount(Base):
     )
 
 
-class Dish(Base):
-    name: str = Field(
-        title='Name',
-        description='The name of the dish',
-    )
-    price: float = Field(
-        title='Price',
-        description='The price of the dish',
-    )
-    category_id: int = Field(
-        alias='categoryId',
-        title='Category ID',
-        description='The ID of the category',
-    )
-
-
-class MenuCategory(Base):
-    name: str = Field(
-        title='Name',
-        description='The name of the menu category',
-    )
-    restaurant_id: int = Field(
-        alias='restaurantId',
-        title='Restaurant ID',
-        description='The ID of the restaurant',
-    )
-
-
 class DishParameter(Base):
     dish_id: int = Field(
         alias='dishId',
@@ -75,4 +48,43 @@ class DishParameter(Base):
         title='Value',
         description='The value of the parameter',
         examples=["500gr", "30kkal"]
+    )
+
+
+class Dish(Base):
+    name: str = Field(
+        title='Name',
+        description='The name of the dish',
+    )
+    price: float = Field(
+        title='Price',
+        description='The price of the dish',
+    )
+    category_id: int = Field(
+        alias='categoryId',
+        title='Category ID',
+        description='The ID of the category',
+    )
+    discounted_price: Optional[float] = Field(
+        alias='discountedPrice',
+        title='Discounted Price',
+        description='The discounted price of the dish',
+        default=None
+    )
+    params: List[DishParameter] = Field(
+        title='Dish Parameters',
+        description='The parameters of the dish',
+        default=None
+    )
+
+
+class MenuCategory(Base):
+    name: str = Field(
+        title='Name',
+        description='The name of the menu category',
+    )
+    restaurant_id: int = Field(
+        alias='restaurantId',
+        title='Restaurant ID',
+        description='The ID of the restaurant',
     )

@@ -1,7 +1,9 @@
-from pydantic import Field
-from typing import List, Optional
+from uuid import UUID
+from typing import List
+from datetime import datetime
+from pydantic import Field, BaseModel
 
-from .base import Base
+from .base import Base, serialize_time
 
 
 class CartItem(Base):
@@ -22,7 +24,11 @@ class CartItem(Base):
     )
 
 
-class Cart(Base):
+class Cart(BaseModel):
+    guid: UUID = Field(
+        title='GUID',
+        description='The ID of the cart',
+    )
     items: List[CartItem] = Field(
         default=[],
         title='Cart items',
@@ -34,9 +40,12 @@ class Cart(Base):
         description='The total cost of the cart item',
         default=None
     )
-    qr_code: Optional[str] = Field(
-        alias='qrCode',
-        title='QR Code',
-        description='The QR Code of the cart',
-        default=None
-    )
+    created_at: datetime = Field(alias="createdAt")
+    updated_at: datetime = Field(alias="updatedAt")
+
+    class Config:
+        json_encoders = {
+            datetime: serialize_time
+        }
+        from_attributes = True
+        populate_by_name = True

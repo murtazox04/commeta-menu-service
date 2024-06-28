@@ -1,14 +1,12 @@
+from uuid import UUID
 from typing import Optional, List
-
-from pydantic import parse_obj_as, ValidationError
-from sqlalchemy import func
 from sqlalchemy.future import select
-from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import parse_obj_as, ValidationError
+from sqlalchemy.orm import joinedload, selectinload
 
 from app import dto
 from app.api import schems
-from .utils import generate_qr_code
 from app.infrastructure.database.dao.rdb import BaseDAO
 from app.infrastructure.database.models import Cart, CartItem, Dish
 
@@ -32,11 +30,6 @@ class CartDAO(BaseDAO[Cart]):
         self.session.add(db_cart)
         await self.session.flush()
 
-        # Now db_cart.id should be available
-        data = f"http://127.0.0.1:8001/carts/{db_cart.id}"
-        file_path = f"media/qrcode/{db_cart.id}.png"
-        db_cart.qr_code = generate_qr_code(data, file_path)
-
         db_cart.total_cost = db_cart.calculate_total_cost()
 
         await self.session.commit()
@@ -59,10 +52,10 @@ class CartDAO(BaseDAO[Cart]):
             print(repr(exc.errors()[0]['type']))
             raise exc
 
-    async def get_cart(self, cart_id: int) -> Optional[dto.Cart]:
+    async def get_cart(self, cart_id: UUID) -> Optional[dto.Cart]:
         query = select(Cart).options(
             selectinload(Cart.items).selectinload(CartItem.dish)
-        ).where(Cart.id == cart_id)
+        ).where(Cart.guid == cart_id)
 
         result = await self.session.execute(query)
         cart = result.scalar_one_or_none()
@@ -79,7 +72,7 @@ class CartDAO(BaseDAO[Cart]):
             raise ValueError("No valid items found for the cart")
         return parse_obj_as(List[dto.Cart], carts)
 
-    async def update_cart(self, cart_id: int, cart_update: schems.CartCreateUpdate) -> Optional[dto.Cart]:
+    async def update_cart(self, cart_id: UUID, cart_update: schems.CartCreateUpdate) -> Optional[dto.Cart]:
         db_cart = await self.session.get(Cart, cart_id)
         if not db_cart:
             return None
@@ -92,14 +85,14 @@ class CartDAO(BaseDAO[Cart]):
         db_cart.items = cart_items
 
         # Update total cost
-        db_cart.total_cost = db_cart.calculate_total_cost
+        db_cart.total_cost = db_cart.calculate_total_cost()
 
         await self.session.commit()
         await self.session.refresh(db_cart)
 
         return db_cart
 
-    async def delete_cart(self, cart_id: int) -> bool:
+    async def delete_cart(self, cart_id: UUID) -> bool:
         db_cart = await self.session.get(Cart, cart_id)
         if not db_cart:
             return False
@@ -108,7 +101,7 @@ class CartDAO(BaseDAO[Cart]):
         await self.session.commit()
         return True
 
-    async def add_item_to_cart(self, cart_id: int, item: schems.CartItemCreateUpdate) -> Optional[dto.Cart]:
+    async def add_item_to_cart(self, cart_id: UUID, item: schems.CartItemCreateUpdate) -> Optional[dto.Cart]:
         async with self.session as session:
             db_cart = await session.get(Cart, cart_id)
             if not db_cart:
@@ -143,7 +136,7 @@ class CartDAO(BaseDAO[Cart]):
 
             return db_cart
 
-    async def remove_item_from_cart(self, cart_id: int, item_id: int) -> Optional[dto.Cart]:
+    async def remove_item_from_cart(self, cart_id: UUID, item_id: int) -> Optional[dto.Cart]:
         db_cart = await self.session.get(Cart, cart_id)
         if not db_cart:
             return None

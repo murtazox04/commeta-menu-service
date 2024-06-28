@@ -1,32 +1,37 @@
 version: '3.9'
 services:
   api:
-    build: .
+    container_name: menu-api
+    image: murtazox04/menu-api:0.0.1
+    build:
+      context: ./
+    env_file:
+      - .env
     command: poetry run python -m app.api
     restart: always
-    container_name: "api"
     depends_on:
-      - postgres
+      - db
     networks:
-      - postgres
+      - api
     ports:
       - "8000:8001"
 
-  postgres:
-    image: postgres
+  db:
+    container_name: menu-db
+    image: postgres:latest
     environment:
       POSTGRES_DB: menu_service
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
     volumes:
-      - postgres:/data/postgres
+      - db:/var/lib/postgresql/data
     networks:
-      - postgres
+      - api
     restart: unless-stopped
 
 
 networks:
-  postgres:
+  api:
 
 volumes:
-  postgres:
+  db:

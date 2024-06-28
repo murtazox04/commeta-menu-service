@@ -70,7 +70,6 @@ async def get_dish(
         dao: HolderDao = Depends(dao_provider)
 ) -> dto.Dish:
     data = await dao.dish.get_dish_by_id(dish_id)
-    print(data)
     return data
 
 
