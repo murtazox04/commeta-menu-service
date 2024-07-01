@@ -1,6 +1,6 @@
 from uuid import UUID
-from typing import List
 from datetime import datetime
+from typing import List, Optional
 from pydantic import Field, BaseModel
 
 from .base import Base, serialize_time
@@ -16,7 +16,7 @@ class CartItem(Base):
         title='Quantity',
         description='The quantity of the dish',
     )
-    total_cost: float = Field(
+    total_cost: Optional[float] = Field(
         alias='totalCost',
         title='Total Cost',
         description='The total cost of the cart item',

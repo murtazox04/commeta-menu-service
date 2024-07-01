@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
-from admin.apps.common.models import BaseModel
+from apps.common.models import BaseModel
 
 
 class Menu(BaseModel):

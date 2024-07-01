@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: menu-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: menu-db
+  template:
+    metadata:
+      labels:
+        app: menu-db
+    spec:
+      containers:
+      - name: db
+        image: postgres:latest
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "menu_service"
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "1234"
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc

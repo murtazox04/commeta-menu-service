@@ -1,9 +1,10 @@
 from .base import Base
 from .product import (
-    MenuCategory,
+    Menu,
     Dish,
     DishParameter,
-    Discount
+    Discount,
+    Parameter
 )
 from .order import Cart, CartItem
 from .restaurant import Restaurant

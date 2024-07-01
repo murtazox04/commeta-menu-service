@@ -1,4 +1,5 @@
 from pydantic import Field
+from typing import Optional
 
 from app.dto import Base
 
@@ -27,7 +28,7 @@ class Restaurant(Base):
         title="Longitude",
         description="Restaurant Longitude",
     )
-    working_time: str = Field(
+    working_time: Optional[str] = Field(
         alias='workingTime',
         title="Working Time",
         description="Restaurant Working Time",

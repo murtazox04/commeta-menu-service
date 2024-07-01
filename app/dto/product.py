@@ -5,6 +5,13 @@ from typing import List, Optional
 from app.dto import Base
 
 
+class Parameter(Base):
+    name: str = Field(
+        title='Name',
+        description='The name of the parameters',
+    )
+
+
 class Discount(Base):
     dish_id: int = Field(
         alias='dishId',
@@ -39,15 +46,15 @@ class DishParameter(Base):
         title='Dish ID',
         description='The ID of the dish parameter',
     )
-    key: str = Field(
-        title='Key',
-        description='The key of the parameter',
-        examples=["weight", "calories"]
-    )
     value: str = Field(
         title='Value',
         description='The value of the parameter',
         examples=["500gr", "30kkal"]
+    )
+    key: Optional[Parameter] = Field(
+        title='Key parameter',
+        description='The key parameter of the parameter',
+        default=None
     )
 
 
@@ -56,12 +63,17 @@ class Dish(Base):
         title='Name',
         description='The name of the dish',
     )
+    restaurant_id: int = Field(
+        alias='restaurantId',
+        title='Restaurant ID',
+        description='The ID of the restaurants',
+    )
     price: float = Field(
         title='Price',
         description='The price of the dish',
     )
-    category_id: int = Field(
-        alias='categoryId',
+    menu_id: int = Field(
+        alias='menuId',
         title='Category ID',
         description='The ID of the category',
     )
@@ -71,20 +83,15 @@ class Dish(Base):
         description='The discounted price of the dish',
         default=None
     )
-    params: List[DishParameter] = Field(
+    params: Optional[List[DishParameter]] = Field(
         title='Dish Parameters',
         description='The parameters of the dish',
-        default=None
+        default=[]
     )
 
 
-class MenuCategory(Base):
+class Menu(Base):
     name: str = Field(
         title='Name',
-        description='The name of the menu category',
-    )
-    restaurant_id: int = Field(
-        alias='restaurantId',
-        title='Restaurant ID',
-        description='The ID of the restaurant',
+        description='The name of the menu',
     )

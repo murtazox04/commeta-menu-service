@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: menu-admin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: menu-admin
+  template:
+    metadata:
+      labels:
+        app: menu-admin
+    spec:
+      containers:
+      - name: admin
+        image: murtazox04/menu-admin:0.0.1
+        ports:
+        - containerPort: 8000
+        env:
+        - name: POSTGRES_DB
+          value: "menu_service"
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "1234"

@@ -31,6 +31,6 @@ if __name__ == '__main__':
     uvicorn.run(
         "app.api.__main__:app",
         host="0.0.0.0",  # or your desired host
-        port=8001,  # or your desired port
+        # port=8001,  # or your desired port
         # reload=True  # if you want to enable automatic reload
     )

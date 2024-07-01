@@ -4,17 +4,33 @@ services:
     container_name: menu-api
     image: murtazox04/menu-api:0.0.1
     build:
-      context: ./
+      context: .
+      dockerfile: docker/api/Dockerfile
     env_file:
       - .env
-    command: poetry run python -m app.api
     restart: always
     depends_on:
       - db
     networks:
       - api
     ports:
-      - "8000:8001"
+      - "8001:8000"  # Adjusted port to avoid conflict
+
+  admin:
+    container_name: menu-admin
+    image: murtazx04/menu-admin:0.0.1
+    build:
+      context: .
+      dockerfile: docker/admin/Dockerfile
+    env_file:
+      - .env
+    restart: always
+    depends_on:
+      - db
+    networks:
+      - admin
+    ports:
+      - "8000:8000"
 
   db:
     container_name: menu-db
@@ -27,11 +43,12 @@ services:
       - db:/var/lib/postgresql/data
     networks:
       - api
+      - admin
     restart: unless-stopped
-
 
 networks:
   api:
+  admin:
 
 volumes:
   db:

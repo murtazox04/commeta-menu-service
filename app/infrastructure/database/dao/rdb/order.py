@@ -2,20 +2,77 @@ from uuid import UUID
 from typing import Optional, List
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import parse_obj_as, ValidationError
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import selectinload
 
 from app import dto
 from app.api import schems
-from app.infrastructure.database.dao.rdb import BaseDAO
-from app.infrastructure.database.models import Cart, CartItem, Dish
+from .base import BaseDAO
+from app.infrastructure.database.models import CartItem, Cart
+
+
+class CartItemDAO(BaseDAO[CartItem]):
+    def __init__(self, session: AsyncSession) -> None:
+        super().__init__(CartItem, session)
+
+    async def add_cart_item(
+            self,
+            cart_item: schems.CartItemCreateUpdate
+    ) -> dto.CartItem:
+        db_cart_item = CartItem(**cart_item.dict())
+        self.session.add(db_cart_item)
+        await self.session.commit()
+        await self.session.refresh(db_cart_item)
+        return dto.CartItem.model_validate(db_cart_item.__dict__, from_attributes=True)
+
+    async def get_cart_item(
+            self,
+            cart_item_id: int
+    ) -> Optional[dto.CartItem]:
+        query = select(CartItem).options(selectinload(CartItem.dish)).where(CartItem.id == cart_item_id)
+        result = await self.session.execute(query)
+        cart_item = result.scalar_one_or_none()
+        return dto.CartItem.model_validate(cart_item.__dict__, from_attributes=True) if cart_item else None
+
+    async def get_cart_items(self) -> List[dto.CartItem]:
+        query = select(CartItem).options(selectinload(CartItem.dish))
+        result = await self.session.execute(query)
+        cart_items = result.scalars().all()
+        return [dto.CartItem.model_validate(cart_item.__dict__, from_attributes=True) for cart_item in cart_items]
+
+    async def update_cart_item(
+            self,
+            cart_item_id: int,
+            cart_item_update: schems.CartItemCreateUpdate
+    ) -> Optional[dto.CartItem]:
+        db_cart_item = await self.session.get(CartItem, cart_item_id)
+        if not db_cart_item:
+            return None
+        for key, value in cart_item_update.dict(exclude_unset=True).items():
+            setattr(db_cart_item, key, value)
+        await self.session.commit()
+        await self.session.refresh(db_cart_item)
+        return dto.CartItem.model_validate(db_cart_item.__dict__, from_attributes=True)
+
+    async def delete_cart_item(
+            self,
+            cart_item_id: int
+    ) -> bool:
+        db_cart_item = await self.session.get(CartItem, cart_item_id)
+        if not db_cart_item:
+            return False
+        await self.session.delete(db_cart_item)
+        await self.session.commit()
+        return True
 
 
 class CartDAO(BaseDAO[Cart]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(Cart, session)
 
-    async def add_cart(self, cart: schems.CartCreateUpdate) -> dto.Cart:
+    async def add_cart(
+            self,
+            cart: schems.CartCreateUpdate
+    ) -> dto.Cart:
         cart_items = await self.session.execute(
             select(CartItem).where(CartItem.id.in_(cart.items)).options(selectinload(CartItem.dish))
         )
@@ -33,169 +90,60 @@ class CartDAO(BaseDAO[Cart]):
         db_cart.total_cost = db_cart.calculate_total_cost()
 
         await self.session.commit()
-        await self.session.refresh(db_cart, attribute_names=[
-            'items', 'total_cost', 'qr_code', 'created_at', 'updated_at'
-        ])
+        await self.session.refresh(db_cart)
 
-        # Convert to dictionary before converting to Pydantic model
-        cart_dict = db_cart.__dict__.copy()
-        cart_dict['items'] = [item.__dict__.copy() for item in db_cart.items]
+        return dto.Cart.model_validate(db_cart.__dict__, from_attributes=True)
 
-        # Ensure all required fields are included
-        cart_dict['created_at'] = db_cart.created_at.isoformat()
-        cart_dict['updated_at'] = db_cart.updated_at.isoformat()
-
-        try:
-            validated_cart = dto.Cart.model_validate(cart_dict, from_attributes=True)
-            return validated_cart
-        except ValidationError as exc:
-            print(repr(exc.errors()[0]['type']))
-            raise exc
-
-    async def get_cart(self, cart_id: UUID) -> Optional[dto.Cart]:
-        query = select(Cart).options(
-            selectinload(Cart.items).selectinload(CartItem.dish)
-        ).where(Cart.guid == cart_id)
-
+    async def get_cart(
+            self,
+            cart_id: UUID
+    ) -> Optional[dto.Cart]:
+        query = select(Cart).options(selectinload(Cart.items)).where(Cart.guid == cart_id)
         result = await self.session.execute(query)
         cart = result.scalar_one_or_none()
-
-        if cart:
-            return cart
-        return None
+        return dto.Cart.model_validate(cart.__dict__, from_attributes=True) if cart else None
 
     async def get_carts(self) -> List[dto.Cart]:
         query = select(Cart).options(selectinload(Cart.items))
         result = await self.session.execute(query)
         carts = result.scalars().all()
-        if not carts:
-            raise ValueError("No valid items found for the cart")
-        return parse_obj_as(List[dto.Cart], carts)
+        return [dto.Cart.model_validate(cart.__dict__, from_attributes=True) for cart in carts]
 
-    async def update_cart(self, cart_id: UUID, cart_update: schems.CartCreateUpdate) -> Optional[dto.Cart]:
-        db_cart = await self.session.get(Cart, cart_id)
+    async def update_cart(
+            self,
+            cart_id: UUID,
+            cart_update: schems.CartCreateUpdate
+    ) -> Optional[dto.Cart]:
+        query = select(Cart).options(selectinload(Cart.items)).where(Cart.guid == cart_id)
+        result = await self.session.execute(query)
+        db_cart = result.scalar_one_or_none()
         if not db_cart:
             return None
 
-        # Update cart items
         cart_items = await self.session.execute(
             select(CartItem).where(CartItem.id.in_(cart_update.items))
         )
         cart_items = cart_items.scalars().all()
         db_cart.items = cart_items
 
-        # Update total cost
         db_cart.total_cost = db_cart.calculate_total_cost()
 
         await self.session.commit()
         await self.session.refresh(db_cart)
 
-        return db_cart
+        return dto.Cart.model_validate(db_cart.__dict__, from_attributes=True)
 
-    async def delete_cart(self, cart_id: UUID) -> bool:
-        db_cart = await self.session.get(Cart, cart_id)
+    async def delete_cart(
+            self,
+            cart_id: UUID
+    ) -> bool:
+        query = select(Cart).where(Cart.guid == cart_id)
+        result = await self.session.execute(query)
+        db_cart = result.scalar_one_or_none()
+
         if not db_cart:
             return False
 
         await self.session.delete(db_cart)
-        await self.session.commit()
-        return True
-
-    async def add_item_to_cart(self, cart_id: UUID, item: schems.CartItemCreateUpdate) -> Optional[dto.Cart]:
-        async with self.session as session:
-            db_cart = await session.get(Cart, cart_id)
-            if not db_cart:
-                return None
-
-            dish_id = item.dish_id
-            dish = await self.session.get(Dish, dish_id)
-            if not dish:
-                raise ValueError("Dish not found")
-
-            # Create a new CartItem instance
-            new_item = CartItem(dish_id=item.dish_id, quantity=item.quantity)
-            if dish.discounted_price and dish.discounted_price > 0:
-                new_item.total_cost = dish.discounted_price * new_item.quantity
-            else:
-                new_item.total_cost = dish.price * new_item.quantity
-
-            # Add the new item to the session
-            session.add(new_item)
-
-            # Associate the new item with the cart
-            db_cart.items.append(new_item)
-
-            # Recalculate total cost after adding the new item
-            db_cart.total_cost += float(new_item.total_cost)
-
-            # Commit the transaction to persist changes
-            await session.commit()
-
-            # Refresh the cart object to reflect any changes made in the database
-            await session.refresh(db_cart)
-
-            return db_cart
-
-    async def remove_item_from_cart(self, cart_id: UUID, item_id: int) -> Optional[dto.Cart]:
-        db_cart = await self.session.get(Cart, cart_id)
-        if not db_cart:
-            return None
-
-        db_cart.items = [item for item in db_cart.items if item.id != item_id]
-        db_cart.total_cost = db_cart.calculate_total_cost()
-
-        await self.session.commit()
-        await self.session.refresh(db_cart)
-
-        return db_cart
-
-
-class CartItemDAO(BaseDAO[CartItem]):
-    def __init__(self, session: AsyncSession) -> None:
-        super().__init__(CartItem, session)
-
-    async def add_cart_item(self, cart_item_data: schems.CartItemCreateUpdate) -> dto.CartItem:
-        db_cart_item = CartItem(**cart_item_data.dict())
-
-        dish_id = cart_item_data.dish_id
-        dish = await self.session.get(Dish, dish_id)
-        if not dish:
-            raise ValueError("Dish not found")
-
-        # Calculate total cost based on discounted_price or price
-        if dish.discounted_price and dish.discounted_price > 0:
-            db_cart_item.total_cost = dish.discounted_price * db_cart_item.quantity
-        else:
-            db_cart_item.total_cost = dish.price * db_cart_item.quantity
-
-        self.session.add(db_cart_item)
-        await self.session.commit()
-
-        return db_cart_item
-
-    async def get_cart_items(self):
-        result = await self.session.execute(select(CartItem).options(joinedload(CartItem.dish)))
-        return result.scalars().all()
-
-    async def get_cart_item_by_id(self, cart_item_id: int):
-        return await self.session.get(CartItem, cart_item_id)
-
-    async def update_cart_item(self, cart_item_id: int, cart_item_data: dict) -> CartItem:
-        cart_item = await self.session.get(CartItem, cart_item_id)
-        if not cart_item:
-            return None
-
-        for key, value in cart_item_data.items():
-            setattr(cart_item, key, value)
-
-        await self.session.commit()
-        return cart_item
-
-    async def delete_cart_item(self, cart_item_id: int) -> bool:
-        cart_item = await self.session.get(CartItem, cart_item_id)
-        if not cart_item:
-            return False
-
-        await self.session.delete(cart_item)
         await self.session.commit()
         return True

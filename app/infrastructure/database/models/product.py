@@ -17,48 +17,55 @@ from sqlalchemy import (
 from .base import BaseModel
 
 
-class MenuCategory(BaseModel):
-    __tablename__ = 'menu_categories'
+class Menu(BaseModel):
+    __tablename__ = 'menus'
 
-    name = Column(String, index=True, nullable=False)
-    restaurant_id = Column(Integer, ForeignKey('restaurants.id'), nullable=False)
+    name = Column(String(255), index=True, nullable=False)
+    dishes = relationship('Dish', back_populates='menu')
 
-    dishes = relationship('Dish', back_populates='category')
+
+class Parameters(BaseModel):
+    __tablename__ = 'parameters'
+
+    name = Column(String(255), index=True, nullable=False)
+    values = relationship('DishParameter', back_populates='key')
 
 
 class Dish(BaseModel):
     __tablename__ = 'dishes'
 
-    name = Column(String, index=True, nullable=False)
+    name = Column(String(255), index=True, nullable=False)
+    restaurant_id = Column(Integer, ForeignKey('restaurants.id'), nullable=False)
     price = Column(Float, nullable=False)
-    category_id = Column(Integer, ForeignKey('menu_categories.id'), nullable=False)
+    menu_id = Column(Integer, ForeignKey('menus.id'), nullable=False)
     discounted_price = Column(Float, nullable=True, default=None)
 
-    category = relationship('MenuCategory', back_populates='dishes')
-    discount = relationship('Discount', uselist=False, back_populates='dish', cascade="all, delete-orphan")
+    restaurant = relationship('Restaurant', back_populates='dishes')
+    menu = relationship('Menu', back_populates='dishes')
     cart_items = relationship('CartItem', back_populates='dish')
     params = relationship('DishParameter', back_populates='dish')
+    discount = relationship('Discount', back_populates='dish', uselist=False)
 
 
 class DishParameter(BaseModel):
     __tablename__ = 'dish_parameters'
 
     dish_id = Column(Integer, ForeignKey('dishes.id'), nullable=False)
-    key = Column(String, nullable=False)
-    value = Column(String, nullable=False)
+    key_id = Column(Integer, ForeignKey('parameters.id'), nullable=False)
+    value = Column(String(255), nullable=False)
 
     dish = relationship('Dish', back_populates='params')
+    key = relationship('Parameters', back_populates='values')
 
 
 class Discount(BaseModel):
     __tablename__ = 'discounts'
 
-    id = Column(Integer, primary_key=True)
     dish_id = Column(Integer, ForeignKey('dishes.id'), unique=True, nullable=False)
     start_date = Column(DateTime(timezone=True), default=func.now(), nullable=False)
     end_date = Column(DateTime(timezone=True), nullable=False)
     price = Column(Float, nullable=False)
-    is_active = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=True, nullable=False)
 
     dish = relationship('Dish', back_populates='discount')
 

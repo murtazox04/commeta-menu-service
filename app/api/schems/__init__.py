@@ -1,9 +1,10 @@
 from .restaraunt import RestaurantCreateUpdate
 from .product import (
     DiscountCreateUpdate,
-    MenuCategoryCreateUpdate,
+    MenuCreateUpdate,
     DishCreateUpdate,
     DishParameterCreateUpdate,
+    ParameterCreateUpdate
 )
 from .order import (
     CartCreateUpdate,

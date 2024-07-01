@@ -31,17 +31,12 @@ class DiscountCreateUpdate(BaseModel):
     )
 
 
-class MenuCategoryCreateUpdate(BaseModel):
+class MenuCreateUpdate(BaseModel):
     name: str = Field(
         title="Name",
-        description="The name of the menu category",
+        description="The name of the menu",
         min_length=1,
         max_length=100
-    )
-    restaurant_id: int = Field(
-        alias="restaurantId",
-        title="Restaurant ID",
-        description="The ID of the associated restaurant"
     )
 
 
@@ -52,14 +47,19 @@ class DishCreateUpdate(BaseModel):
         min_length=1,
         max_length=100
     )
+    restaurant_id: int = Field(
+        alias="restaurantId",
+        title="Restaurant ID",
+        description="The ID of the associated restaurant"
+    )
     price: float = Field(
         title="Price",
         description="The price of the dish"
     )
-    category_id: int = Field(
-        alias="categoryId",
+    menu_id: int = Field(
+        alias="menuId",
         title="Category ID",
-        description="The ID of the associated menu category"
+        description="The ID of the associated menu"
     )
 
 
@@ -69,14 +69,22 @@ class DishParameterCreateUpdate(BaseModel):
         title="Dish ID",
         description="The ID of the associated dish"
     )
-    key: str = Field(
+    key_id: int = Field(
+        alias="keyId",
         title="Key",
-        description="Key or name of the parameter",
-        min_length=1,
-        max_length=100
+        description="Key or name of the parameter"
     )
     value: str = Field(
         title="Value",
         description="Value associated with the parameter",
+        max_length=255
+    )
+
+
+class ParameterCreateUpdate(BaseModel):
+    name: str = Field(
+        title="Name",
+        description="The name of the parameter",
+        min_length=1,
         max_length=255
     )

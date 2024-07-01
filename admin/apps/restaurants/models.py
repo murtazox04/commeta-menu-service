@@ -1,6 +1,6 @@
 from django.db import models
 
-from admin.apps.common.models import BaseModel
+from apps.common.models import BaseModel
 
 
 class Restaurant(BaseModel):

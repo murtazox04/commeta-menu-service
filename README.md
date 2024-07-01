@@ -1,79 +1,63 @@
 # Commeta Menu Service
 
+A microservice for managing menu-related operations.
+
 ## Prerequisites
 
 - Docker
 - Docker Compose
-- Python (for development)
-- FastAPI
-- SQLAlchemy
-- Alembic
 
 ## Getting Started
 
-### Clone the Repository
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/murtazox04/commeta-menu-service.git
+   cd commeta-menu-service
+2. Create a `.env` file in the root directory with the following content:
+   ```bash
+   DB_HOST=db
+   DB_PORT=5432
+   DB_NAME=menu_service
+   DB_USER=postgres
+   DB_PASSWORD=1234
+   ```
+3. Build and start the containers:
+   ```bash
+   docker-compose up -d --build
+   ```
+4. Enter the docker container:
+   ```bash
+   docker-compose exec -it menu-admin /bin/sh
+   ```
+5. Enter the project directory:
+   ```bash
+   cd admin
+   ```
+6. Create an admin superuser:
+   ```bash
+   python manage.py createsuperuser
+   ```
+5. Access the admin panel at `http://localhost:8000/admin`
 
-```bash
-git clone https://github.com/murtazox04/commeta-menu-service.git
-cd repository
-```
+# Development
 
-## Environment Variables
-
-Create a .env file in the root directory with the following environment variables:
-
-```bash
-# PostgreSQL Database
-DB_HOST=db
-DB_PORT=5432
-DB_NAME=menu_service
-DB_USER=postgres
-DB_PASSWORD=1234
-```
-
-## Docker Compose Setup
-
-Build and start the containers using Docker Compose:
-```bash
-docker-compose up -d --build
-```
-
-This command will build the Docker images defined in docker-compose.yml and start the services (api and db).
-
-## Running Migrations
-
-### Alembic
-
-To manage database migrations, we use Alembic. After setting up your Docker containers:
-
-1. Access the `api` service container:
-
-    ```bash
-    docker-compose exec api bash
-    ```
-
-2. Generate an initial migration (replace `message` with a meaningful description):
-
-    ```bash
-    alembic revision --autogenerate -m "message"
-    ```
-3. Apply the migration to your database:
-
-    ```bash
-    alembic upgrade head
-    ```
+## For local development, you'll need:
+- Python
+- FastAPI
+- Django
+- Django-Unfold
+- SQLAlchemy
+- Alembic
 
 ## Stopping the Application
+To stop and remove the Docker containers:
 
-To stop the Docker containers:
-
-```bash
-docker-compose down
-```
+   ```bash
+   docker-compose down
+   ```
 
 ## Additional Notes
 
-- Replace placeholders (`repository`, `message`, etc.) with actual values relevant to your project.
-- Customize the Docker configurations (`docker-compose.yml`, `Dockerfile`) as needed for your specific requirements.
-- Ensure proper security practices when handling sensitive information such as database passwords.
-- For production deployment, consider using environment-specific configurations and settings.
+- Customize Docker configurations in docker-compose.yml and Dockerfile as needed.
+- For production deployment, use environment-specific configurations and enhanced security practices.
+- Refer to individual service documentation for more detailed information.
