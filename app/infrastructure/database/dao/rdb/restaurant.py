@@ -23,6 +23,14 @@ class RestaurantDAO(BaseDAO[Restaurant]):
         await self.session.refresh(db_restaurant)
         return dto.Restaurant.model_validate(db_restaurant.__dict__, from_attributes=True)
 
+    async def get_restaurant_by_name(self, name: str) -> List[dto.Restaurant]:
+        search = f"%{name}%"
+        query = select(Restaurant).options(selectinload(Restaurant.dishes)).filter(Restaurant.name.like(search))
+        result = await self.session.execute(query)
+        restaurants = result.scalars().all()
+        print(restaurants)
+        return [dto.Restaurant.model_validate(restaurant.__dict__, from_attributes=True) for restaurant in restaurants]
+
     async def get_restaurant(
             self,
             restaurant_id: int

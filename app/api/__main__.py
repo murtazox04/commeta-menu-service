@@ -32,5 +32,5 @@ if __name__ == '__main__':
         "app.api.__main__:app",
         host="0.0.0.0",  # or your desired host
         # port=8001,  # or your desired port
-        # reload=True  # if you want to enable automatic reload
+        reload=True  # if you want to enable automatic reload
     )

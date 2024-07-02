@@ -9,6 +9,8 @@ services:
     env_file:
       - .env
     restart: always
+    volumes:
+      - ./:/app
     depends_on:
       - db
     networks:

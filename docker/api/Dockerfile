@@ -2,7 +2,7 @@
 FROM python:3.10
 
 # Set the working directory in the container.
-WORKDIR ./app
+WORKDIR /app
 
 # Copy the dependencies file to the working directory.
 COPY ./poetry.lock ./pyproject.toml ./

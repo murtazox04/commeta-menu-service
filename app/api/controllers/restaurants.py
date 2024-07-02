@@ -9,10 +9,14 @@ from app.infrastructure.database.dao import HolderDao
 
 router = APIRouter(prefix="/restaurants", tags=["restaurants"])
 
+
 @router.get("/", response_model=List[dto.Restaurant])
-async def get_restaurants(dao: HolderDao = Depends(dao_provider)) -> List[dto.Restaurant]:
+async def get_restaurants(search: str, dao: HolderDao = Depends(dao_provider)) -> List[dto.Restaurant]:
     try:
-        restaurants = await dao.restaurant.get_restaurants()
+        if search:
+            restaurants = await dao.restaurant.get_restaurant_by_name(search)
+        else:
+            restaurants = await dao.restaurant.get_restaurants()
         if not restaurants:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Restaurants not found")
         return restaurants
@@ -70,3 +74,5 @@ async def delete_restaurant(restaurant_id: int, dao: HolderDao = Depends(dao_pro
         )
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
